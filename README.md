@@ -2,7 +2,7 @@
   <img src="assets/icon.png" width="128" height="128" alt="iCanHazRepose icon"/>
   <h1>iCanHazRepose</h1>
   <p><strong>Take breaks from your screen. Without interrupting your meetings.</strong></p>
-  <a href="https://github.com/deseven/iCanHazRepose/releases/latest/download/iCanHazRepose.dmg">
+  <a href="https://github.com/deseven/iCanHazRepose/releases/latest/download/iCHR.dmg">
     <img src="assets/download-button.svg" alt="Download for Mac">
   </a>
   <p><sub>Free and open source. Requires macOS 13+.</sub></p>
