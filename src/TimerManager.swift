@@ -277,9 +277,11 @@ class TimerManager: ObservableObject {
 
     private func endBreak() {
         if !muteSounds { NSSound(named: "Blow")?.play() }
-        overlayManager.dismissWithAnimation()
-        remainingSeconds = workDurationSeconds
-        state = .working
+        overlayManager.dismissWithAnimation { [weak self] in
+            guard let self else { return }
+            self.remainingSeconds = self.workDurationSeconds
+            self.state = .working
+        }
     }
 
     private func checkMeetingStatus() {

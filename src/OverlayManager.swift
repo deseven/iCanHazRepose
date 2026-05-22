@@ -89,7 +89,7 @@ class OverlayManager {
 
     // MARK: - Dismiss
 
-    func dismissWithAnimation() {
+    func dismissWithAnimation(completion: @escaping () -> Void = {}) {
         let windows = isCompactMode ? (compactPanel.map { [$0] } ?? []) : overlayWindows
         for window in windows {
             NSAnimationContext.runAnimationGroup { context in
@@ -100,6 +100,7 @@ class OverlayManager {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
             self?.dismissOverlay()
+            completion()
         }
     }
 
