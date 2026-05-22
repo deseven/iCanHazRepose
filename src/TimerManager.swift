@@ -36,6 +36,7 @@ class TimerManager: ObservableObject {
     private var secondsBeforePause: Int = 0
     private var pauseReason: PauseReason = .manual
     private var breakStartTime: Date = .distantPast
+    private var graceAnimTask: Task<Void, Never>?
 
     let meetingDetector = MeetingDetector()
     let overlayManager = OverlayManager()
@@ -171,6 +172,8 @@ class TimerManager: ObservableObject {
     }
 
     func skipBreak() {
+        graceAnimTask?.cancel()
+        graceAnimTask = nil
         overlayManager.dismissOverlay()
         remainingSeconds = workDurationSeconds
         state = .working
@@ -223,14 +226,14 @@ class TimerManager: ObservableObject {
             if elapsed >= breakGracePeriod {
                 if isInGracePeriod {
                     isInGracePeriod = false
+                    graceAnimTask?.cancel()
+                    graceAnimTask = nil
                 }
                 graceProgress = 1
                 remainingSeconds -= 1
                 if remainingSeconds <= 0 {
                     endBreak()
                 }
-            } else {
-                graceProgress = min(1, elapsed / breakGracePeriod)
             }
         }
     }
@@ -282,6 +285,7 @@ class TimerManager: ObservableObject {
         breakStartTime = Date()
         isInGracePeriod = true
         graceProgress = 0
+        startGraceAnimation()
 
         if isFrontmostAppFullscreen() {
             overlayManager.showCompactBreakOverlay(timerManager: self)
@@ -293,11 +297,35 @@ class TimerManager: ObservableObject {
     }
 
     private func endBreak() {
+        graceAnimTask?.cancel()
+        graceAnimTask = nil
         if !muteSounds { NSSound(named: "Blow")?.play() }
         overlayManager.dismissWithAnimation { [weak self] in
             guard let self else { return }
             self.remainingSeconds = self.workDurationSeconds
             self.state = .working
+        }
+    }
+
+    private func startGraceAnimation() {
+        graceAnimTask?.cancel()
+        graceAnimTask = Task { [weak self] in
+            guard let self else { return }
+            let start = Date()
+            while !Task.isCancelled {
+                let elapsed = Date().timeIntervalSince(start)
+                if elapsed >= self.breakGracePeriod { break }
+                let progress = min(1.0, elapsed / self.breakGracePeriod)
+                await MainActor.run { [weak self] in
+                    self?.graceProgress = progress
+                }
+                try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms
+            }
+            if !Task.isCancelled {
+                await MainActor.run { [weak self] in
+                    self?.graceProgress = 1
+                }
+            }
         }
     }
 
