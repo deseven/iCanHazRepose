@@ -59,11 +59,7 @@ class TimerManager: ObservableObject {
 
     var breakDurationSeconds: Int {
         let val = UserDefaults.standard.integer(forKey: SettingsKey.breakDurationSeconds)
-        // Keep the internal lower bound below the menu minimum on purpose:
-        // shorter values are useful for testing and manual UserDefaults overrides,
-        // while the normal user-facing minimum is enforced by AppDelegate menu options.
-        // Break countdown is decremented after the initial display frame,
-        // so 599 seconds produces the intended user-visible "10 min" break.
+        // FIXME: clamp to 9:59 due to UI issues
         return val.clamped(to: 5...599)
     }
 
