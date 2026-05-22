@@ -25,6 +25,7 @@ enum SettingsKey {
     static let muteSounds = "muteSounds"
     static let pauseWhenIdle = "pauseWhenIdle"
     static let skippedUpdate = "skippedUpdate"
+    static let hideMenuBarTimer = "hideMenuBarTimer"
 }
 
 @MainActor
@@ -124,6 +125,7 @@ class TimerManager: ObservableObject {
             SettingsKey.allowSkipBreak: true,
             SettingsKey.muteSounds: false,
             SettingsKey.pauseWhenIdle: true,
+            SettingsKey.hideMenuBarTimer: false,
         ])
         // Start timer and ticker (ticker runs for app lifetime)
         remainingSeconds = workDurationSeconds
