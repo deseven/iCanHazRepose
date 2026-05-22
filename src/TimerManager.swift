@@ -40,7 +40,10 @@ class TimerManager: ObservableObject {
     let meetingDetector = MeetingDetector()
     let overlayManager = OverlayManager()
     private let postMeetingBreakDelay = 5
-    private let breakGracePeriod: TimeInterval = 1.5
+    let breakGracePeriod: TimeInterval = 1.5
+
+    @Published var isInGracePeriod: Bool = false
+    @Published var graceProgress: Double = 1
 
     // Activity to prevent App Nap
     private var activity: NSObjectProtocol?
@@ -216,11 +219,18 @@ class TimerManager: ObservableObject {
             }
 
         case .onBreak:
-            if Date().timeIntervalSince(breakStartTime) >= breakGracePeriod {
+            let elapsed = Date().timeIntervalSince(breakStartTime)
+            if elapsed >= breakGracePeriod {
+                if isInGracePeriod {
+                    isInGracePeriod = false
+                }
+                graceProgress = 1
                 remainingSeconds -= 1
                 if remainingSeconds <= 0 {
                     endBreak()
                 }
+            } else {
+                graceProgress = min(1, elapsed / breakGracePeriod)
             }
         }
     }
@@ -270,6 +280,8 @@ class TimerManager: ObservableObject {
         remainingSeconds = breakDurationSeconds
         state = .onBreak
         breakStartTime = Date()
+        isInGracePeriod = true
+        graceProgress = 0
 
         if isFrontmostAppFullscreen() {
             overlayManager.showCompactBreakOverlay(timerManager: self)

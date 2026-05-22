@@ -55,6 +55,8 @@ struct CompactBreakOverlayView: View {
                         .font(.system(size: 30, weight: .light, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.9))
                         .contentTransition(.numericText())
+                        .opacity(reduceMotion ? 1 : timerManager.graceProgress)
+                        .animation(.easeOut(duration: 1), value: timerManager.graceProgress)
                 }
 
                 VStack(spacing: 8) {
