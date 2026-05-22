@@ -30,7 +30,7 @@ The break reminder also respects full screen apps. If you're watching a movie or
 
 ## How it works
 
-1. Set your work interval (5–60 min) and break duration (20 sec–5 min)
+1. Set your work interval (5–60 min) and break duration (20 sec–10 min)
 2. A countdown appears in your menu bar
 3. When time's up, you will receive a gentle reminder to look away
 4. If you're on a call, the timer pauses automatically until you're done

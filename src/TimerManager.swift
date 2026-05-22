@@ -59,7 +59,7 @@ class TimerManager: ObservableObject {
 
     var breakDurationSeconds: Int {
         let val = UserDefaults.standard.integer(forKey: SettingsKey.breakDurationSeconds)
-        return val.clamped(to: 5...300)
+        return val.clamped(to: 5...600)
     }
 
     var pauseDuringMeetings: Bool {
