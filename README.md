@@ -26,6 +26,8 @@ iCanHazRepose lives in your menu bar, counts down your work interval, and dims y
 
 The difference from every other break reminder: **iCanHazRepose detects when you're in a meeting and stays out of your way.** No calendar integration, no app-specific setup. If your camera or mic is active, it knows you're on a call and waits.
 
+The break reminder also respects full screen apps. If you're watching a movie or playing a game a small panel appears in the middle of the screen that doesn't block any input and can be dismissed by pressing Escape.
+
 ## How it works
 
 1. Set your work interval (5–60 min) and break duration (20 sec–5 min)
@@ -58,7 +60,10 @@ It's smart about passive screen use too: if you're watching a video (where apps 
 
 ### Download
 
-[Download the latest DMG](https://github.com/deseven/iCanHazRepose/releases/latest/download/iCanHazRepose.dmg), open it, and drag iCanHazRepose to Applications.
+**Stable** release — download from the [Releases](https://github.com/deseven/iCanHazRepose/releases) page.
+
+**Dev** build — compiled from the `main` branch: [download](https://d7.wtf/s/iCHR-dev.zip)  
+*(only use this if you need unreleased functionality or want to help with testing)*
 
 ### Build from source
 
