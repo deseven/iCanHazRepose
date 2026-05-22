@@ -24,10 +24,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     #if DEBUG
     private let workIntervalOptions = [1, 5, 10, 15, 20, 25, 30, 45, 60, 90]
-    private let breakDurationOptions = [10, 20, 30, 60, 120, 300, 600]
+    private let breakDurationOptions = [10, 20, 30, 60, 120, 300, 599]
     #else
     private let workIntervalOptions = [5, 10, 15, 20, 25, 30, 45, 60, 90]
-    private let breakDurationOptions = [20, 30, 60, 120, 300, 600]
+    private let breakDurationOptions = [20, 30, 60, 120, 300, 599]
     #endif
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -412,6 +412,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - Helpers
 
     private func formatBreakDuration(_ seconds: Int) -> String {
+        if seconds == 599 {
+            return "10 min"
+        }
         if seconds < 60 {
             return "\(seconds) sec"
         } else {
