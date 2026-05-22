@@ -260,7 +260,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Log.info("Work interval changed to \(sender.tag) min")
         UserDefaults.standard.set(sender.tag, forKey: SettingsKey.workDurationMinutes)
         if timerManager.state == .working {
-            timerManager.start()
+            let newDuration = timerManager.workDurationSeconds
+            if timerManager.remainingSeconds > newDuration {
+                timerManager.remainingSeconds = newDuration
+            }
         }
     }
 
@@ -300,7 +303,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApplication.shared.activate(ignoringOtherApps: true)
         NSApplication.shared.orderFrontStandardAboutPanel(options: [
             .applicationName: "iCanHazRepose",
-            .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+            .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
             .version: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
             .credits: credits,
         ])
