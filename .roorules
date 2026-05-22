@@ -1,0 +1,7 @@
+This project is a macOS app that prompts the user to rest their eyes every X minutes. It uses swift 5 and a simple build system (`build.sh`). The UI uses direct Cocoa calls, no XIB.
+
+Modern UI stuff could be used since we're targeting macOS 13 or higher. Feel free to do research using one-liners with `swift -e` if needed.
+
+Use `build.sh` to build the project and check for possible compilation errors (it's a wrapper around `swift build` that does everything to make a proper app bundle).
+
+Don't overthink. Ask if something is unclear. If encountered a difficult problem first explain it and ask advice from the user.
