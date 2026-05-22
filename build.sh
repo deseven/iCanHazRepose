@@ -309,21 +309,21 @@ echo -e "  ${greenColor}${bold}Build complete!${noColor}"
 case "$mode" in
     dev)
         echo -e "  ${dimColor}mode: development${noColor}"
-        echo -e "  ${dimColor}signing: ad-hoc${noColor}"
+        echo -e "  ${dimColor}signing: ${redColor}ad-hoc${noColor}"
         echo -e "  ${dimColor}artifacts: dist/$name.app${noColor}"
         echo -e "  ${dimColor}launching...${noColor}"
         "$loc/dist/$name.app/Contents/MacOS/$name"
         ;;
     dev-release)
         echo -e "  ${dimColor}mode: development release${noColor}"
-        echo -e "  ${dimColor}signing: $(if [ "$can_sign" = true ]; then echo "Developer ID"; else echo "ad-hoc"; fi)${noColor}"
-        echo -e "  ${dimColor}notarized: $(if [ "$can_notarize" = true ]; then echo "yes"; else echo "no"; fi)${noColor}"
+        echo -e "  ${dimColor}signing: $(if [ "$can_sign" = true ]; then echo "${greenColor}Developer ID${noColor}"; else echo "${redColor}ad-hoc${noColor}"; fi)"
+        echo -e "  ${dimColor}notarized: $(if [ "$can_notarize" = true ]; then echo "${greenColor}yes${noColor}"; else echo "${redColor}no${noColor}"; fi)"
         echo -e "  ${dimColor}artifacts: dist/$name.app  dist/$shortName-dev.zip${noColor}"
         ;;
     release)
         echo -e "  ${dimColor}mode: release${noColor}"
-        echo -e "  ${dimColor}signing: $(if [ "$can_sign" = true ]; then echo "Developer ID"; else echo "ad-hoc"; fi)${noColor}"
-        echo -e "  ${dimColor}notarized: $(if [ "$can_notarize" = true ]; then echo "yes"; else echo "no"; fi)${noColor}"
+        echo -e "  ${dimColor}signing: $(if [ "$can_sign" = true ]; then echo "${greenColor}Developer ID${noColor}"; else echo "${redColor}ad-hoc${noColor}"; fi)"
+        echo -e "  ${dimColor}notarized: $(if [ "$can_notarize" = true ]; then echo "${greenColor}yes${noColor}"; else echo "${redColor}no${noColor}"; fi)"
         echo -e "  ${dimColor}artifacts: dist/$name.app  dist/$shortName.zip  dist/$shortName.dmg${noColor}"
         ;;
 esac
