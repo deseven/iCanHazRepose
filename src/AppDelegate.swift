@@ -32,6 +32,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         timerManager = TimerManager()
 
+        Log.info("App started")
+        let ud = UserDefaults.standard
+        Log.info("Config: work=\(timerManager.workDurationSeconds / 60)min, break=\(timerManager.breakDurationSeconds)s, pauseDuringMeetings=\(timerManager.pauseDuringMeetings), allowSkipBreak=\(ud.bool(forKey: SettingsKey.allowSkipBreak)), muteSounds=\(timerManager.muteSounds), pauseWhenIdle=\(timerManager.pauseWhenIdle), launchAtLogin=\(SMAppService.mainApp.status == .enabled)")
+
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.image = NSImage(systemSymbolName: "timer", accessibilityDescription: "iCanHazRepose")
         statusItem.button?.imagePosition = .imageLeading
@@ -248,10 +252,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func restartTimer() {
+        Log.info("Timer restarted by user")
         timerManager.start()
     }
 
     @objc private func setWorkInterval(_ sender: NSMenuItem) {
+        Log.info("Work interval changed to \(sender.tag) min")
         UserDefaults.standard.set(sender.tag, forKey: SettingsKey.workDurationMinutes)
         if timerManager.state == .working {
             timerManager.start()
@@ -259,17 +265,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func setBreakDuration(_ sender: NSMenuItem) {
+        Log.info("Break duration changed to \(sender.tag)s")
         UserDefaults.standard.set(sender.tag, forKey: SettingsKey.breakDurationSeconds)
     }
 
     @objc private func toggleBoolSetting(_ sender: NSMenuItem) {
         guard let key = sender.representedObject as? String else { return }
-        UserDefaults.standard.set(!UserDefaults.standard.bool(forKey: key), forKey: key)
+        let newValue = !UserDefaults.standard.bool(forKey: key)
+        UserDefaults.standard.set(newValue, forKey: key)
+        Log.info("Setting '\(key)' changed to \(newValue)")
     }
 
     @objc private func toggleLaunchAtLogin() {
-        let enabled = SMAppService.mainApp.status == .enabled
-        try? enabled ? SMAppService.mainApp.unregister() : SMAppService.mainApp.register()
+        let currentlyEnabled = SMAppService.mainApp.status == .enabled
+        let newStatus = !currentlyEnabled
+        try? currentlyEnabled ? SMAppService.mainApp.unregister() : SMAppService.mainApp.register()
+        Log.info("Launch at login changed to \(newStatus)")
     }
 
     @objc private func showAbout() {
@@ -377,7 +388,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func quitApp() {
+        Log.info("App quitting")
         NSApplication.shared.terminate(nil)
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        Log.info("App terminated")
     }
 
     // MARK: - Helpers

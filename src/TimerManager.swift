@@ -38,6 +38,8 @@ class TimerManager: ObservableObject {
     private var pauseReason: PauseReason = .manual
     private var breakStartTime: Date = .distantPast
     private var graceAnimTask: Task<Void, Never>?
+    private var wasInMeeting: Bool = false
+    private var wasIdle: Bool = false
 
     let meetingDetector = MeetingDetector()
     let overlayManager = OverlayManager()
@@ -143,8 +145,10 @@ class TimerManager: ObservableObject {
     private func handleWake() {
         switch state {
         case .working:
+            Log.info("Timer restarted after system wake")
             remainingSeconds = workDurationSeconds
         case .onBreak:
+            Log.info("Break dismissed after system wake, timer restarted")
             overlayManager.dismissOverlay()
             remainingSeconds = workDurationSeconds
             state = .working
@@ -154,12 +158,14 @@ class TimerManager: ObservableObject {
     }
 
     func start() {
+        Log.info("Timer started: work=\(workDurationSeconds / 60)min, break=\(breakDurationSeconds)s")
         remainingSeconds = workDurationSeconds
         state = .working
     }
 
     func pause() {
         guard state == .working else { return }
+        Log.info("Timer paused by user")
         secondsBeforePause = remainingSeconds
         state = .paused
         pauseReason = .manual
@@ -167,12 +173,14 @@ class TimerManager: ObservableObject {
 
     func resume() {
         guard state == .paused else { return }
+        Log.info("Timer resumed by user")
         remainingSeconds = secondsBeforePause
         state = .working
         pauseReason = .manual
     }
 
     func skipBreak() {
+        Log.info("Break overlay closed: user cancelled")
         graceAnimTask?.cancel()
         graceAnimTask = nil
         overlayManager.dismissOverlay()
@@ -274,6 +282,7 @@ class TimerManager: ObservableObject {
         if pauseDuringMeetings {
             meetingDetector.check()
             if meetingDetector.isInMeeting {
+                Log.info("Break overlay suppressed: meeting in progress")
                 secondsBeforePause = 0
                 state = .paused
                 pauseReason = .breakPending
@@ -290,14 +299,17 @@ class TimerManager: ObservableObject {
 
         if isFrontmostAppFullscreen() {
             overlayManager.showCompactBreakOverlay(timerManager: self)
+            Log.info("Break overlay triggered: compact overlay (fullscreen app detected)")
         } else {
             overlayManager.showBreakOverlay(timerManager: self)
+            Log.info("Break overlay triggered: full overlay (work timer expired)")
         }
 
         if !muteSounds { NSSound(named: "Glass")?.play() }
     }
 
     private func endBreak() {
+        Log.info("Break overlay closed: timeout completed")
         graceAnimTask?.cancel()
         graceAnimTask = nil
         if !muteSounds { NSSound(named: "Blow")?.play() }
@@ -334,6 +346,10 @@ class TimerManager: ObservableObject {
         meetingDetector.check()
 
         if meetingDetector.isInMeeting {
+            if !wasInMeeting {
+                Log.info("Meeting mode entered (\(meetingDetector.meetingSource ?? "unknown"))")
+                wasInMeeting = true
+            }
             // Timer keeps running during meetings when working — no pause
             if state == .onBreak {
                 // If a meeting starts during a break, skip the break
@@ -343,6 +359,10 @@ class TimerManager: ObservableObject {
                 pauseReason = .meeting
             }
         } else {
+            if wasInMeeting {
+                Log.info("Meeting mode left")
+                wasInMeeting = false
+            }
             if state == .paused && pauseReason == .breakPending {
                 // Meeting ended with break pending — short countdown then break
                 remainingSeconds = postMeetingBreakDelay
@@ -368,11 +388,19 @@ class TimerManager: ObservableObject {
 
         if idleTime >= idleThreshold && !hasActiveDisplaySleepAssertion() {
             if state == .working {
+                if !wasIdle {
+                    Log.info("Idle mode entered (idle for \(Int(idleTime))s)")
+                    wasIdle = true
+                }
                 secondsBeforePause = remainingSeconds
                 state = .paused
                 pauseReason = .idle
             }
         } else {
+            if wasIdle {
+                Log.info("Idle mode left")
+                wasIdle = false
+            }
             if state == .paused && pauseReason == .idle {
                 resumeFromIdle()
             }
