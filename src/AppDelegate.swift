@@ -315,7 +315,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApplication.shared.orderFrontStandardAboutPanel(options: [
             .applicationName: "iCanHazRepose",
             .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
-            .version: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
             .credits: credits,
         ])
     }
