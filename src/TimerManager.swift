@@ -59,7 +59,8 @@ class TimerManager: ObservableObject {
 
     var breakDurationSeconds: Int {
         let val = UserDefaults.standard.integer(forKey: SettingsKey.breakDurationSeconds)
-        return val.clamped(to: 5...300)
+        // FIXME: clamp to 9:59 due to UI issues
+        return val.clamped(to: 5...599)
     }
 
     var pauseDuringMeetings: Bool {
