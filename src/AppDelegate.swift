@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var timerManager: TimerManager!
     private var statusBarTimer: Timer?
     private var menuIsOpen = false
+    private var updateCheckMenuItem: NSMenuItem!
 
     // Menu items that need updating
     private var statusMenuItem: NSMenuItem!
@@ -38,6 +39,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         buildMenu()
         startStatusBarTimer()
+        setupUpdateSystem()
     }
 
     // MARK: - Menu Construction
@@ -123,9 +125,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         aboutItem.target = self
         menu.addItem(aboutItem)
 
-        let updateItem = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
-        updateItem.target = self
-        menu.addItem(updateItem)
+        updateCheckMenuItem = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
+        updateCheckMenuItem.target = self
+        menu.addItem(updateCheckMenuItem)
 
         menu.addItem(.separator())
 
@@ -294,7 +296,84 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func checkForUpdates() {
-        // Update system not yet implemented — placeholder for future replacement
+        if UpdateManager.shared.isChecking { return }
+        updateCheckMenuItem.title = "Checking for Updates…"
+        updateCheckMenuItem.isEnabled = false
+
+        UpdateManager.shared.checkForUpdates(manual: true) { [weak self] result in
+            guard let self else { return }
+            self.updateCheckMenuItem.title = "Check for Updates…"
+            self.updateCheckMenuItem.isEnabled = true
+
+            switch result {
+            case .success(let updateInfo):
+                if let updateInfo = updateInfo {
+                    self.presentUpdateDialog(for: updateInfo)
+                } else {
+                    let alert = NSAlert()
+                    alert.messageText = "No Updates Available"
+                    alert.informativeText = "You're running the latest version of iCanHazRepose."
+                    alert.alertStyle = .informational
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                }
+            case .failure(let error):
+                let alert = NSAlert()
+                alert.messageText = "Update Check Failed"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            }
+        }
+    }
+
+    // MARK: - Update System
+
+    private func setupUpdateSystem() {
+        let manager = UpdateManager.shared
+
+        manager.onAutomaticUpdateFound = { [weak self] updateInfo in
+            self?.presentUpdateDialog(for: updateInfo)
+        }
+
+        manager.startPeriodicChecks()
+    }
+
+    private func presentUpdateDialog(for updateInfo: UpdateInfo) {
+        let vc = UpdateDialogViewController(
+            updateInfo: updateInfo,
+            onUpdate: {
+                Task {
+                    do {
+                        try await UpdateManager.shared.downloadAndInstall(updateInfo)
+                    } catch {
+                        let alert = NSAlert()
+                        alert.messageText = "Update Failed"
+                        alert.informativeText = error.localizedDescription
+                        alert.alertStyle = .critical
+                        alert.addButton(withTitle: "OK")
+                        alert.runModal()
+                    }
+                }
+            },
+            onSkip: {
+                UpdateManager.shared.skippedVersion = updateInfo.version
+            }
+        )
+
+        let window = NSWindow(contentViewController: vc)
+        window.styleMask = [.titled, .closable]
+        window.title = "Software Update"
+
+        // Present as a sheet on the key window, or as a regular window if none
+        if let keyWindow = NSApp.keyWindow {
+            keyWindow.beginSheet(window) { _ in }
+        } else {
+            window.center()
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
     @objc private func quitApp() {

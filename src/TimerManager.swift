@@ -24,6 +24,7 @@ enum SettingsKey {
     static let allowSkipBreak = "allowSkipBreak"
     static let muteSounds = "muteSounds"
     static let pauseWhenIdle = "pauseWhenIdle"
+    static let skippedUpdate = "skippedUpdate"
 }
 
 @MainActor
