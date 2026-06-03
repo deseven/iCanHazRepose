@@ -15,6 +15,7 @@ class OverlayManager {
 
     // Carbon global hotkey refs for compact mode escape
     private var escapeHotKeyRef: EventHotKeyRef?
+    private var ctrlEscapeHotKeyRef: EventHotKeyRef?
     private var escapeEventHandlerRef: EventHandlerRef?
 
     // MARK: - Full overlay (all screens)
@@ -130,8 +131,11 @@ class OverlayManager {
         } else {
             keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 if event.keyCode == 53 { // Escape
-                    timerManager.skipBreak()
-                    return nil
+                    let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+                    if mods.isEmpty || mods == .control {
+                        timerManager.skipBreak()
+                        return nil
+                    }
                 }
                 return event
             }
@@ -146,25 +150,42 @@ class OverlayManager {
         unregisterEscapeHotkey()
     }
 
-    // MARK: - Carbon global hotkey (escape, no modifiers)
+    // MARK: - Carbon global hotkey (escape, with/without control)
 
     private func registerEscapeHotkey(handler: @escaping () -> Void) {
         unregisterEscapeHotkey()
 
-        let hotKeyID = EventHotKeyID(signature: fourCharCode("reps"), id: 1)
-        var hotKeyRef: EventHotKeyRef?
+        let signature = fourCharCode("reps")
 
-        let status = RegisterEventHotKey(
+        // Hotkey 1: Escape (no modifiers)
+        var hotKeyRef1: EventHotKeyRef?
+        let status1 = RegisterEventHotKey(
             0x35, // kVK_Escape
             0,    // no modifiers
-            hotKeyID,
+            EventHotKeyID(signature: signature, id: 1),
             GetApplicationEventTarget(),
             0,
-            &hotKeyRef
+            &hotKeyRef1
         )
+        if status1 == noErr, let ref = hotKeyRef1 {
+            escapeHotKeyRef = ref
+        }
 
-        guard status == noErr, let ref = hotKeyRef else { return }
-        escapeHotKeyRef = ref
+        // Hotkey 2: Ctrl+Escape
+        var hotKeyRef2: EventHotKeyRef?
+        let status2 = RegisterEventHotKey(
+            0x35,               // kVK_Escape
+            UInt32(controlKey), // ctrl modifier
+            EventHotKeyID(signature: signature, id: 2),
+            GetApplicationEventTarget(),
+            0,
+            &hotKeyRef2
+        )
+        if status2 == noErr, let ref = hotKeyRef2 {
+            ctrlEscapeHotKeyRef = ref
+        }
+
+        guard escapeHotKeyRef != nil || ctrlEscapeHotKeyRef != nil else { return }
 
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
@@ -189,7 +210,7 @@ class OverlayManager {
                     EventParamType(typeEventHotKeyID),
                     nil, MemoryLayout<EventHotKeyID>.size, nil,
                     &hkCom
-                ) == noErr, hkCom.id == 1 else { return OSStatus(eventNotHandledErr) }
+                ) == noErr, (hkCom.id == 1 || hkCom.id == 2) else { return OSStatus(eventNotHandledErr) }
 
                 let ctx = Unmanaged<EscapeHandlerContext>.fromOpaque(userData).takeUnretainedValue()
                 ctx.handler()
@@ -211,6 +232,10 @@ class OverlayManager {
         if let ref = escapeHotKeyRef {
             UnregisterEventHotKey(ref)
             escapeHotKeyRef = nil
+        }
+        if let ref = ctrlEscapeHotKeyRef {
+            UnregisterEventHotKey(ref)
+            ctrlEscapeHotKeyRef = nil
         }
         if let handlerRef = escapeEventHandlerRef {
             RemoveEventHandler(handlerRef)

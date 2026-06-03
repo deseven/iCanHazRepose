@@ -102,7 +102,7 @@ struct BreakOverlayView: View {
                                 Text("Skip")
                                     .font(.system(size: 15, weight: .medium))
                                     .foregroundStyle(.white.opacity(0.5))
-                                Text("esc")
+                                Text("Esc / ⌃Esc")
                                     .font(.system(size: 11, weight: .medium, design: .rounded))
                                     .foregroundStyle(.white.opacity(0.25))
                             }

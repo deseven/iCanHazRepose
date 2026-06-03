@@ -77,7 +77,7 @@ struct CompactBreakOverlayView: View {
                         Text("Skip")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.white.opacity(0.5))
-                        Text("esc")
+                        Text("Esc / ⌃Esc")
                             .font(.system(size: 10, weight: .medium, design: .rounded))
                             .foregroundStyle(.white.opacity(0.25))
                     }
