@@ -382,7 +382,7 @@ class TimerManager: ObservableObject {
     #if DEBUG
     private let idleThreshold: TimeInterval = 30 // 30 seconds for testing
     #else
-    private let idleThreshold: TimeInterval = 300 // 5 minutes
+    private var idleThreshold: TimeInterval { 60 + TimeInterval(breakDurationSeconds) }
     #endif
 
     private func checkIdleStatus() {
