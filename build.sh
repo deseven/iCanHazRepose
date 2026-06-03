@@ -146,6 +146,7 @@ do_create_bundle() {
 
     cp "$loc/Info.plist" "$loc/dist/$name.app/Contents/Info.plist"
     cp "$loc/res/main.icns" "$loc/dist/$name.app/Contents/Resources/"
+    cp "$loc/res/ui/"*.png "$loc/dist/$name.app/Contents/Resources/"
     cp "$loc/LICENSE" "$loc/dist/$name.app/Contents/Resources/"
 }
 

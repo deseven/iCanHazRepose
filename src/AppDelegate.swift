@@ -3,12 +3,12 @@ import ServiceManagement
 import SwiftUI
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem!
     private var timerManager: TimerManager!
     private var statusBarTimer: Timer?
     private var menuIsOpen = false
-    private var updateCheckMenuItem: NSMenuItem!
+    private var aboutWindow: NSWindow?
 
     // Menu items that need updating
     private var statusMenuItem: NSMenuItem!
@@ -38,7 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Log.info("Config: work=\(timerManager.workDurationSeconds / 60)min, break=\(timerManager.breakDurationSeconds)s, pauseDuringMeetings=\(timerManager.pauseDuringMeetings), allowSkipBreak=\(ud.bool(forKey: SettingsKey.allowSkipBreak)), muteSounds=\(timerManager.muteSounds), pauseWhenIdle=\(timerManager.pauseWhenIdle), launchAtLogin=\(SMAppService.mainApp.status == .enabled)")
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "timer", accessibilityDescription: "iCanHazRepose")
+        statusItem.button?.image = NSImage(systemSymbolName: "timer", accessibilityDescription: AppConstants.appName)
         statusItem.button?.imagePosition = .imageLeading
         statusItem.button?.font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
 
@@ -131,17 +131,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        let aboutItem = NSMenuItem(title: "About iCanHazRepose", action: #selector(showAbout), keyEquivalent: "")
+        let aboutItem = NSMenuItem(title: "About \(AppConstants.appName)", action: #selector(showAbout), keyEquivalent: "")
         aboutItem.target = self
         menu.addItem(aboutItem)
 
-        updateCheckMenuItem = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
-        updateCheckMenuItem.target = self
-        menu.addItem(updateCheckMenuItem)
-
         menu.addItem(.separator())
 
-        let quitItem = NSMenuItem(title: "Quit iCanHazRepose", action: #selector(quitApp), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "Quit \(AppConstants.appName)", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -298,58 +294,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func showAbout() {
-        let credits = NSMutableAttributedString()
-        credits.append(NSAttributedString(
-            string: "made by deseven\noriginal code by Fikri Karim\n",
-            attributes: [.font: NSFont.systemFont(ofSize: 11)]
-        ))
-        credits.append(NSAttributedString(
-            string: "GitHub",
-            attributes: [
-                .font: NSFont.systemFont(ofSize: 11),
-                .link: URL(string: "https://github.com/deseven/iCanHazRepose")!,
-            ]
-        ))
-
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        NSApplication.shared.orderFrontStandardAboutPanel(options: [
-            .applicationName: "iCanHazRepose",
-            .applicationVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
-            .credits: credits,
-        ])
-    }
-
-    @objc private func checkForUpdates() {
-        if UpdateManager.shared.isChecking { return }
-        updateCheckMenuItem.title = "Checking for Updates…"
-        updateCheckMenuItem.isEnabled = false
-
-        UpdateManager.shared.checkForUpdates(manual: true) { [weak self] result in
-            guard let self else { return }
-            self.updateCheckMenuItem.title = "Check for Updates…"
-            self.updateCheckMenuItem.isEnabled = true
-
-            switch result {
-            case .success(let updateInfo):
-                if let updateInfo = updateInfo {
-                    self.presentUpdateDialog(for: updateInfo)
-                } else {
-                    let alert = NSAlert()
-                    alert.messageText = "No Updates Available"
-                    alert.informativeText = "You're running the latest version of iCanHazRepose."
-                    alert.alertStyle = .informational
-                    alert.addButton(withTitle: "OK")
-                    alert.runModal()
-                }
-            case .failure(let error):
-                let alert = NSAlert()
-                alert.messageText = "Update Check Failed"
-                alert.informativeText = error.localizedDescription
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
-            }
+        // If already open, just bring to front
+        if let existingWindow = aboutWindow, existingWindow.isVisible {
+            existingWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
         }
+
+        let aboutVC = AboutViewController()
+
+        let window = NSWindow(contentViewController: aboutVC)
+        window.styleMask = [.titled, .closable, .resizable]
+        window.title = "About \(AppConstants.appName)"
+        window.setContentSize(NSSize(width: 700, height: 520))
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.delegate = self
+
+        // Switch from accessory to regular mode so the window appears in the Dock
+        NSApp.setActivationPolicy(.regular)
+
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        aboutWindow = window
     }
 
     // MARK: - Update System
@@ -373,7 +341,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                         try await UpdateManager.shared.downloadAndInstall(updateInfo)
                     } catch {
                         let alert = NSAlert()
-                        alert.messageText = "Update Failed"
+                        alert.messageText = "Update failed"
                         alert.informativeText = error.localizedDescription
                         alert.alertStyle = .critical
                         alert.addButton(withTitle: "OK")
@@ -398,6 +366,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
         }
+    }
+
+    // MARK: - NSWindowDelegate
+
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow,
+              window == aboutWindow else { return }
+        aboutWindow = nil
+        // Return to accessory mode when the about window is closed
+        NSApp.setActivationPolicy(.accessory)
     }
 
     @objc private func quitApp() {

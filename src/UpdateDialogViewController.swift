@@ -43,7 +43,7 @@ class UpdateDialogViewController: NSViewController {
     private func setupUI() {
         let container = view
 
-        let appName = "iCanHazRepose"
+        let appName = AppConstants.appName
 
         // Header: "A new version of {appName} was found."
         let headerText = "A new version of \(appName) was found."
