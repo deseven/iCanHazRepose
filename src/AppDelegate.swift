@@ -135,8 +135,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWindowDele
         aboutItem.target = self
         menu.addItem(aboutItem)
 
-        menu.addItem(.separator())
-
         let quitItem = NSMenuItem(title: "Quit \(AppConstants.appName)", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
