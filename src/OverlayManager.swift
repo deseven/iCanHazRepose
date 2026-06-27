@@ -10,10 +10,9 @@ private class KeyablePanel: NSPanel {
 class OverlayManager {
     private var overlayWindows: [NSPanel] = []
     private var compactPanel: NSPanel?
-    private var keyMonitor: Any?
     private var isCompactMode: Bool = false
 
-    // Carbon global hotkey refs for compact mode escape
+    // Carbon global hotkey refs for escape (used by both full and compact overlays)
     private var escapeHotKeyRef: EventHotKeyRef?
     private var ctrlEscapeHotKeyRef: EventHotKeyRef?
     private var escapeEventHandlerRef: EventHandlerRef?
@@ -122,31 +121,14 @@ class OverlayManager {
         let allowSkip = UserDefaults.standard.bool(forKey: SettingsKey.allowSkipBreak)
         guard allowSkip else { return }
 
-        if isCompactMode {
-            registerEscapeHotkey { [weak timerManager] in
-                DispatchQueue.main.async {
-                    timerManager?.skipBreak()
-                }
-            }
-        } else {
-            keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                if event.keyCode == 53 { // Escape
-                    let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-                    if mods.isEmpty || mods == .control {
-                        timerManager.skipBreak()
-                        return nil
-                    }
-                }
-                return event
+        registerEscapeHotkey { [weak timerManager] in
+            DispatchQueue.main.async {
+                timerManager?.skipBreak()
             }
         }
     }
 
     private func uninstallKeyMonitor() {
-        if let keyMonitor {
-            NSEvent.removeMonitor(keyMonitor)
-            self.keyMonitor = nil
-        }
         unregisterEscapeHotkey()
     }
 
