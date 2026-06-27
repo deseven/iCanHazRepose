@@ -199,6 +199,29 @@ class TimerManager: ObservableObject {
         }
     }
 
+    // Called when the user toggles "Pause During Meetings".
+    func pauseDuringMeetingsSettingChanged(enabled: Bool) {
+        guard !enabled, state == .paused else { return }
+        switch pauseReason {
+        case .meeting, .breakPending:
+            Log.info("Pause During Meetings disabled while in meeting pause — resuming")
+            wasInMeeting = false
+            remainingSeconds = workDurationSeconds
+            state = .working
+            pauseReason = .manual
+        default:
+            break
+        }
+    }
+
+    // Called when the user toggles "Pause When Idle".
+    func pauseWhenIdleSettingChanged(enabled: Bool) {
+        guard !enabled, state == .paused, pauseReason == .idle else { return }
+        Log.info("Pause When Idle disabled while idle — resuming")
+        wasIdle = false
+        resumeFromIdle()
+    }
+
     // MARK: - Private
 
     private func startTicking() {

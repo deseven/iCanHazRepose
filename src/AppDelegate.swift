@@ -282,6 +282,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWindowDele
         let newValue = !UserDefaults.standard.bool(forKey: key)
         UserDefaults.standard.set(newValue, forKey: key)
         Log.info("Setting '\(key)' changed to \(newValue)")
+
+        // Some toggles need to reconcile the current timer state, otherwise
+        // disabling the feature while it's actively pausing the timer would
+        // leave the timer stranded (the resume path lives inside the gated
+        // periodic check).
+        switch key {
+        case SettingsKey.pauseDuringMeetings:
+            timerManager.pauseDuringMeetingsSettingChanged(enabled: newValue)
+        case SettingsKey.pauseWhenIdle:
+            timerManager.pauseWhenIdleSettingChanged(enabled: newValue)
+        default:
+            break
+        }
     }
 
     @objc private func toggleLaunchAtLogin() {
