@@ -14,9 +14,8 @@ struct CompactBreakOverlayView: View {
 
     var body: some View {
         ZStack {
-            // Blurred dark background
-            VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
-                .overlay(Color.black.opacity(0.3))
+            // Dark tint over the window's blur material (added in OverlayManager)
+            Color.black.opacity(0.3)
 
             VStack(spacing: 28) {
                 // Progress ring with breathing animation
@@ -140,21 +139,3 @@ private extension View {
     }
 }
 
-// NSViewRepresentable for visual effect blur
-private struct VisualEffectBlur: NSViewRepresentable {
-    let material: NSVisualEffectView.Material
-    let blendingMode: NSVisualEffectView.BlendingMode
-
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = material
-        view.blendingMode = blendingMode
-        view.state = .active
-        view.wantsLayer = true
-        view.layer?.cornerRadius = 24
-        view.layer?.masksToBounds = true
-        return view
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
-}

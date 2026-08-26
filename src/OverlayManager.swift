@@ -61,11 +61,10 @@ class OverlayManager {
 
         let panelWidth: CGFloat = 360
         let panelHeight: CGFloat = 420
+        let cornerRadius: CGFloat = 24
         let panelX = screen.frame.midX - panelWidth / 2
         let panelY = screen.frame.midY - panelHeight / 2
         let panelRect = NSRect(x: panelX, y: panelY, width: panelWidth, height: panelHeight)
-
-        let view = CompactBreakOverlayView(timerManager: timerManager)
 
         let panel = NSPanel(
             contentRect: panelRect,
@@ -79,7 +78,27 @@ class OverlayManager {
         panel.backgroundColor = .clear
         panel.hasShadow = false
         panel.ignoresMouseEvents = true
-        panel.contentView = NSHostingView(rootView: view)
+
+        // The blur material must be the window's root view for the mask to
+        // clip it. Nested inside an NSHostingView (or clipped by SwiftUI),
+        // the backdrop layer drawn by the window server stays rectangular.
+        let effectView = NSVisualEffectView()
+        effectView.material = .hudWindow
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+        effectView.wantsLayer = true
+        effectView.layer?.cornerRadius = cornerRadius
+        effectView.layer?.masksToBounds = true
+        effectView.maskImage = Self.roundedMaskImage(size: panelRect.size, cornerRadius: cornerRadius)
+
+        let hostingView = NSHostingView(
+            rootView: CompactBreakOverlayView(timerManager: timerManager)
+        )
+        hostingView.frame = effectView.bounds
+        hostingView.autoresizingMask = [.width, .height]
+        effectView.addSubview(hostingView)
+
+        panel.contentView = effectView
 
         panel.orderFrontRegardless()
         compactPanel = panel
@@ -116,6 +135,14 @@ class OverlayManager {
     }
 
     // MARK: - Private
+
+    private static func roundedMaskImage(size: CGSize, cornerRadius: CGFloat) -> NSImage {
+        NSImage(size: size, flipped: false) { rect in
+            NSColor.black.setFill()
+            NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius).fill()
+            return true
+        }
+    }
 
     private func installKeyMonitor(timerManager: TimerManager) {
         let allowSkip = UserDefaults.standard.bool(forKey: SettingsKey.allowSkipBreak)
