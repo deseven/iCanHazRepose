@@ -78,4 +78,5 @@ Requires Xcode 15+ and macOS 13+.
 ## Help & Support
 
 - [File an issue](https://github.com/deseven/iCanHazRepose/issues/new) for bugs, suggestions, or questions
+- Discord: https://discord.gg/YE9KyTXRPt
 - Reddit: https://www.reddit.com/r/iCanHazApps

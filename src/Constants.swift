@@ -12,6 +12,6 @@ enum AppConstants {
     static let originalRepoURL = "https://github.com/fikrikarim/repose"
     static let kofiURL = "https://ko-fi.com/deseven"
     static let redditURL = "https://www.reddit.com/r/iCanHazApps"
-    static let telegramURL = "https://t.me/icanhazapps"
+    static let discordURL = "https://discord.gg/YE9KyTXRPt"
     static let boxiconsURL = "https://boxicons.com"
 }
